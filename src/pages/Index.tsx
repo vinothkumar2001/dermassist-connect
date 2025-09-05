@@ -1,12 +1,32 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import Header from "@/components/Header";
+import Hero from "@/components/Hero";
+import UserDashboard from "@/components/UserDashboard";
+import DoctorDashboard from "@/components/DoctorDashboard";
+import AdminDashboard from "@/components/AdminDashboard";
+
+type ViewType = 'home' | 'user' | 'doctor' | 'admin';
 
 const Index = () => {
+  const [currentView, setCurrentView] = useState<ViewType>('home');
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'user':
+        return <UserDashboard />;
+      case 'doctor':
+        return <DoctorDashboard />;
+      case 'admin':
+        return <AdminDashboard />;
+      default:
+        return <Hero onGetStarted={() => setCurrentView('user')} />;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header currentView={currentView} onViewChange={setCurrentView} />
+      {renderCurrentView()}
     </div>
   );
 };
