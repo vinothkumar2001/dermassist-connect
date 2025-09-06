@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Menu, Shield, Users, User } from "lucide-react";
+import { Heart, Menu, Shield, Users, User, LogIn, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   currentView: 'home' | 'user' | 'doctor' | 'admin';
@@ -9,6 +11,13 @@ interface HeaderProps {
 
 const Header = ({ currentView, onViewChange }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    onViewChange('home');
+  };
 
   return (
     <header className="bg-card soft-shadow border-b sticky top-0 z-50">
@@ -37,30 +46,59 @@ const Header = ({ currentView, onViewChange }: HeaderProps) => {
             >
               Home
             </Button>
-            <Button
-              variant={currentView === 'user' ? 'default' : 'ghost'}
-              onClick={() => onViewChange('user')}
-              className="medical-transition"
-            >
-              <User className="w-4 h-4 mr-2" />
-              Patient Portal
-            </Button>
-            <Button
-              variant={currentView === 'doctor' ? 'default' : 'ghost'}
-              onClick={() => onViewChange('doctor')}
-              className="medical-transition"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Doctor Portal
-            </Button>
-            <Button
-              variant={currentView === 'admin' ? 'default' : 'ghost'}
-              onClick={() => onViewChange('admin')}
-              className="medical-transition"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              Admin Panel
-            </Button>
+            
+            {user ? (
+              <>
+                <Button
+                  variant={currentView === 'user' ? 'default' : 'ghost'}
+                  onClick={() => onViewChange('user')}
+                  className="medical-transition"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Patient Portal
+                </Button>
+                
+                {profile?.user_type === 'doctor' && (
+                  <Button
+                    variant={currentView === 'doctor' ? 'default' : 'ghost'}
+                    onClick={() => onViewChange('doctor')}
+                    className="medical-transition"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Doctor Portal
+                  </Button>
+                )}
+                
+                {profile?.user_type === 'admin' && (
+                  <Button
+                    variant={currentView === 'admin' ? 'default' : 'ghost'}
+                    onClick={() => onViewChange('admin')}
+                    className="medical-transition"
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    Admin Panel
+                  </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  onClick={handleSignOut}
+                  className="medical-transition"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="default"
+                onClick={() => navigate('/auth')}
+                className="bg-medical-gradient hover:glow-effect"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -88,39 +126,74 @@ const Header = ({ currentView, onViewChange }: HeaderProps) => {
               >
                 Home
               </Button>
-              <Button
-                variant={currentView === 'user' ? 'default' : 'ghost'}
-                onClick={() => {
-                  onViewChange('user');
-                  setIsMobileMenuOpen(false);
-                }}
-                className="justify-start"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Patient Portal
-              </Button>
-              <Button
-                variant={currentView === 'doctor' ? 'default' : 'ghost'}
-                onClick={() => {
-                  onViewChange('doctor');
-                  setIsMobileMenuOpen(false);
-                }}
-                className="justify-start"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Doctor Portal
-              </Button>
-              <Button
-                variant={currentView === 'admin' ? 'default' : 'ghost'}
-                onClick={() => {
-                  onViewChange('admin');
-                  setIsMobileMenuOpen(false);
-                }}
-                className="justify-start"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Admin Panel
-              </Button>
+              
+              {user ? (
+                <>
+                  <Button
+                    variant={currentView === 'user' ? 'default' : 'ghost'}
+                    onClick={() => {
+                      onViewChange('user');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="justify-start"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Patient Portal
+                  </Button>
+                  
+                  {profile?.user_type === 'doctor' && (
+                    <Button
+                      variant={currentView === 'doctor' ? 'default' : 'ghost'}
+                      onClick={() => {
+                        onViewChange('doctor');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="justify-start"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Doctor Portal
+                    </Button>
+                  )}
+                  
+                  {profile?.user_type === 'admin' && (
+                    <Button
+                      variant={currentView === 'admin' ? 'default' : 'ghost'}
+                      onClick={() => {
+                        onViewChange('admin');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="justify-start"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Admin Panel
+                    </Button>
+                  )}
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="justify-start"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    navigate('/auth');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="justify-start bg-medical-gradient"
+                >
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
             </div>
           </nav>
         )}
