@@ -14,7 +14,316 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      consultations: {
+        Row: {
+          case_id: string
+          consultation_type: string | null
+          cost: number | null
+          created_at: string
+          doctor_id: string
+          duration_minutes: number | null
+          feedback: string | null
+          follow_up_date: string | null
+          follow_up_required: boolean | null
+          id: string
+          meeting_url: string | null
+          notes: string | null
+          patient_id: string
+          prescription: Json | null
+          rating: number | null
+          scheduled_at: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          case_id: string
+          consultation_type?: string | null
+          cost?: number | null
+          created_at?: string
+          doctor_id: string
+          duration_minutes?: number | null
+          feedback?: string | null
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          meeting_url?: string | null
+          notes?: string | null
+          patient_id: string
+          prescription?: Json | null
+          rating?: number | null
+          scheduled_at?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string
+          consultation_type?: string | null
+          cost?: number | null
+          created_at?: string
+          doctor_id?: string
+          duration_minutes?: number | null
+          feedback?: string | null
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          meeting_url?: string | null
+          notes?: string | null
+          patient_id?: string
+          prescription?: Json | null
+          rating?: number | null
+          scheduled_at?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultations_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "medical_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultations_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "consultations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      medical_cases: {
+        Row: {
+          ai_diagnosis: Json | null
+          case_title: string
+          created_at: string
+          doctor_diagnosis: Json | null
+          id: string
+          image_urls: string[] | null
+          is_emergency: boolean | null
+          patient_id: string
+          priority: string | null
+          status: string | null
+          symptoms: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_diagnosis?: Json | null
+          case_title: string
+          created_at?: string
+          doctor_diagnosis?: Json | null
+          id?: string
+          image_urls?: string[] | null
+          is_emergency?: boolean | null
+          patient_id: string
+          priority?: string | null
+          status?: string | null
+          symptoms?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_diagnosis?: Json | null
+          case_title?: string
+          created_at?: string
+          doctor_diagnosis?: Json | null
+          id?: string
+          image_urls?: string[] | null
+          is_emergency?: boolean | null
+          patient_id?: string
+          priority?: string | null
+          status?: string | null
+          symptoms?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_cases_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          case_id: string | null
+          consultation_id: string | null
+          content: string
+          created_at: string
+          file_url: string | null
+          id: string
+          is_read: boolean | null
+          message_type: string | null
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          case_id?: string | null
+          consultation_id?: string | null
+          content: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          case_id?: string | null
+          consultation_id?: string | null
+          content?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "medical_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          related_id: string | null
+          title: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_id?: string | null
+          title: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_id?: string | null
+          title?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          last_name: string | null
+          license_number: string | null
+          location: Json | null
+          phone: string | null
+          specialties: string[] | null
+          updated_at: string
+          user_id: string
+          user_type: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_name?: string | null
+          license_number?: string | null
+          location?: Json | null
+          phone?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          user_id: string
+          user_type?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_name?: string | null
+          license_number?: string | null
+          location?: Json | null
+          phone?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          user_id?: string
+          user_type?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
