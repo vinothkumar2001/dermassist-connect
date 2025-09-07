@@ -42,7 +42,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-subtle-gradient flex items-center justify-center p-6">
+    <div className="min-h-screen hero-gradient flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -70,7 +70,7 @@ const Auth = () => {
         </div>
 
         {/* Auth Forms */}
-        <Card className="soft-shadow">
+        <Card className="soft-shadow glass-effect">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>

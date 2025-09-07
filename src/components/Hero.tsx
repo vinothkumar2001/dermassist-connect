@@ -9,7 +9,7 @@ interface HeroProps {
 
 const Hero = ({ onGetStarted }: HeroProps) => {
   return (
-    <div className="min-h-screen bg-subtle-gradient">
+    <div className="min-h-screen hero-gradient">
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -70,7 +70,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
             </div>
             
             {/* Floating Cards */}
-            <Card className="absolute -top-4 -left-4 p-4 soft-shadow bg-card/95 backdrop-blur-sm">
+            <Card className="absolute -top-4 -left-4 p-4 soft-shadow glass-effect">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
                   <Brain className="w-5 h-5 text-primary" />
@@ -82,7 +82,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
               </div>
             </Card>
             
-            <Card className="absolute -bottom-4 -right-4 p-4 soft-shadow bg-card/95 backdrop-blur-sm">
+            <Card className="absolute -bottom-4 -right-4 p-4 soft-shadow glass-effect">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-secondary/50 rounded-lg">
                   <Shield className="w-5 h-5 text-secondary-foreground" />
@@ -109,7 +109,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          <Card className="p-8 text-center hover:medical-shadow medical-transition hover:-translate-y-2">
+          <Card className="p-8 text-center card-gradient hover:medical-shadow medical-transition hover:-translate-y-2">
             <div className="p-4 bg-primary/10 rounded-2xl w-fit mx-auto mb-6">
               <Brain className="w-8 h-8 text-primary" />
             </div>
@@ -120,7 +120,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
             </p>
           </Card>
 
-          <Card className="p-8 text-center hover:medical-shadow medical-transition hover:-translate-y-2">
+          <Card className="p-8 text-center card-gradient hover:medical-shadow medical-transition hover:-translate-y-2">
             <div className="p-4 bg-secondary/50 rounded-2xl w-fit mx-auto mb-6">
               <Stethoscope className="w-8 h-8 text-secondary-foreground" />
             </div>
@@ -131,7 +131,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
             </p>
           </Card>
 
-          <Card className="p-8 text-center hover:medical-shadow medical-transition hover:-translate-y-2">
+          <Card className="p-8 text-center card-gradient hover:medical-shadow medical-transition hover:-translate-y-2">
             <div className="p-4 bg-accent/50 rounded-2xl w-fit mx-auto mb-6">
               <Users className="w-8 h-8 text-accent-foreground" />
             </div>
