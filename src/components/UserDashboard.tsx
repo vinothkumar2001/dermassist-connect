@@ -93,7 +93,7 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-subtle-gradient">
+    <div className="min-h-screen hero-gradient">
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold medical-heading mb-2">Patient Portal</h1>

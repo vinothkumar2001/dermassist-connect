@@ -52,6 +52,7 @@
     --gradient-hero: linear-gradient(135deg, hsl(210 100% 96%), hsl(210 75% 92%), hsl(180 60% 94%));
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 30% 98%));
     --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-glow)));
+    --gradient-auth: linear-gradient(135deg, hsl(210 20% 98%), hsl(210 30% 95%), hsl(180 20% 96%));
 
     /* Medical Shadows */
     --shadow-medical: 0 10px 30px -10px hsl(var(--primary) / 0.2);
@@ -168,6 +169,14 @@
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .auth-gradient {
+    background: var(--gradient-auth);
+  }
+  
+  .medical-card {
+    @apply card-gradient soft-shadow medical-transition hover:glow-effect;
   }
 }
 

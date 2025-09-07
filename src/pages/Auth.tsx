@@ -42,8 +42,13 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen hero-gradient flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen auth-gradient flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_25%_25%,_hsl(var(--primary))_0%,_transparent_50%)]"></div>
+        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_75%_75%,_hsl(var(--accent))_0%,_transparent_50%)]"></div>
+      </div>
+      <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
           <Button
@@ -70,7 +75,7 @@ const Auth = () => {
         </div>
 
         {/* Auth Forms */}
-        <Card className="soft-shadow glass-effect">
+        <Card className="medical-card">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
