@@ -5,9 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMedicalCases } from "@/hooks/useMedicalCases";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useNearbyDoctors } from "@/hooks/useNearbyDoctors";
+import { LocationInput } from "@/components/LocationInput";
+import { DoctorMap } from "@/components/DoctorMap";
 import { 
   Upload, 
   Camera, 
@@ -22,23 +26,31 @@ import {
   Brain
 } from "lucide-react";
 
+interface Location {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
 const UserDashboard = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [symptoms, setSymptoms] = useState('');
   const [caseTitle, setCaseTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<Location | null>(null);
   
   const { user, profile } = useAuth();
   const { cases, loading, createCase, analyzeWithAI } = useMedicalCases();
   const { uploadMedicalImage, uploading } = useFileUpload();
+  const { doctors, loading: doctorsLoading, findNearbyDoctors } = useNearbyDoctors();
 
-  // Mock data for doctors (in a real app, this would come from the database)
-  const mockDoctors = [
-    { id: '1', name: "Dr. Sarah Mitchell", specialty: "Dermatology", rating: 4.9, distance: "0.8 mi" },
-    { id: '2', name: "Dr. James Chen", specialty: "Dermatology", rating: 4.7, distance: "1.2 mi" },
-    { id: '3', name: "Dr. Emily Rodriguez", specialty: "Dermatology", rating: 4.8, distance: "2.1 mi" }
-  ];
+  // Search for doctors when location changes
+  useEffect(() => {
+    if (userLocation) {
+      findNearbyDoctors(userLocation, 50);
+    }
+  }, [userLocation, findNearbyDoctors]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -183,6 +195,11 @@ const UserDashboard = () => {
                   />
                 </div>
 
+                <LocationInput
+                  onLocationChange={setUserLocation}
+                  className="pt-4 border-t"
+                />
+
                 {uploadedImage && caseTitle.trim() && (
                   <Button
                     onClick={handleCreateAndAnalyze}
@@ -265,29 +282,83 @@ const UserDashboard = () => {
                   <span>Dermatologists Near You</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {mockDoctors.map((doctor) => (
-                  <div
-                    key={doctor.id}
-                    className="p-4 border rounded-lg hover:bg-secondary/20 medical-transition cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold">{doctor.name}</h4>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span className="text-sm font-medium">{doctor.rating}</span>
+              <CardContent>
+                <Tabs defaultValue="list" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="list">List View</TabsTrigger>
+                    <TabsTrigger value="map">Map View</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="list" className="mt-4 space-y-4">
+                    {!userLocation ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>Set your location to find nearby dermatologists</p>
                       </div>
+                    ) : doctorsLoading ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                        <p className="text-sm text-muted-foreground">Finding doctors near you...</p>
+                      </div>
+                    ) : doctors.length > 0 ? (
+                      doctors.slice(0, 5).map((doctor) => (
+                        <div
+                          key={doctor.user_id}
+                          className="p-4 border rounded-lg hover:bg-secondary/20 medical-transition cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold">
+                              {doctor.first_name} {doctor.last_name}
+                              {doctor.is_verified && (
+                                <CheckCircle className="w-4 h-4 text-green-500 inline ml-1" />
+                              )}
+                            </h4>
+                            <div className="flex items-center space-x-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="text-sm font-medium">4.8</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1 text-sm clinical-text mb-3">
+                            <div className="flex items-center justify-between">
+                              <span>{doctor.specialties?.join(', ') || 'Dermatology'}</span>
+                              <span className="font-medium text-primary">{doctor.distance}km away</span>
+                            </div>
+                            {doctor.years_experience && (
+                              <span className="text-xs text-muted-foreground">
+                                {doctor.years_experience} years experience
+                              </span>
+                            )}
+                            {doctor.bio && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {doctor.bio}
+                              </p>
+                            )}
+                          </div>
+                          <Button size="sm" className="w-full bg-medical-gradient">
+                            <Calendar className="w-4 h-4 mr-2" />
+                            Schedule Consultation
+                          </Button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>No dermatologists found in your area</p>
+                        <p className="text-xs mt-1">Try expanding your search radius</p>
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="map" className="mt-4">
+                    <div className="h-64 w-full">
+                      <DoctorMap 
+                        doctors={doctors}
+                        userLocation={userLocation}
+                        className="h-full w-full"
+                      />
                     </div>
-                    <div className="flex items-center justify-between text-sm clinical-text">
-                      <span>{doctor.specialty}</span>
-                      <span>{doctor.distance} away</span>
-                    </div>
-                    <Button size="sm" className="mt-3 w-full bg-medical-gradient">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Schedule Consultation
-                    </Button>
-                  </div>
-                ))}
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
