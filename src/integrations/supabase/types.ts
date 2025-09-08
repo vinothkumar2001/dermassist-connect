@@ -113,6 +113,7 @@ export type Database = {
           status: string | null
           symptoms: string | null
           updated_at: string
+          user_location: Json | null
         }
         Insert: {
           ai_diagnosis?: Json | null
@@ -127,6 +128,7 @@ export type Database = {
           status?: string | null
           symptoms?: string | null
           updated_at?: string
+          user_location?: Json | null
         }
         Update: {
           ai_diagnosis?: Json | null
@@ -141,6 +143,7 @@ export type Database = {
           status?: string | null
           symptoms?: string | null
           updated_at?: string
+          user_location?: Json | null
         }
         Relationships: [
           {

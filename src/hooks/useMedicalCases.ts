@@ -16,6 +16,11 @@ export interface MedicalCase {
   is_emergency: boolean;
   created_at: string;
   updated_at: string;
+  user_location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
 }
 
 export interface CreateCaseData {
@@ -24,6 +29,11 @@ export interface CreateCaseData {
   image_urls?: string[];
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   is_emergency?: boolean;
+  user_location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
 }
 
 export function useMedicalCases() {

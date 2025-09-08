@@ -76,12 +76,13 @@ const UserDashboard = () => {
         return;
       }
 
-      // Create the medical case
+      // Create the medical case with location data
       const { case: newCase, error: caseError } = await createCase({
         case_title: caseTitle,
         symptoms: symptoms || undefined,
         image_urls: [imageUrl],
-        priority: 'medium'
+        priority: 'medium',
+        user_location: userLocation || undefined
       });
 
       if (caseError || !newCase) {
