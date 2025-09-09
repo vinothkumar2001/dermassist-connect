@@ -12,6 +12,7 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useNearbyDoctors } from "@/hooks/useNearbyDoctors";
 import { LocationInput } from "@/components/LocationInput";
 import { DoctorMap } from "@/components/DoctorMap";
+import { AppointmentBooking } from "@/components/AppointmentBooking";
 import { 
   Upload, 
   Camera, 
@@ -335,10 +336,10 @@ const UserDashboard = () => {
                               </p>
                             )}
                           </div>
-                          <Button size="sm" className="w-full bg-medical-gradient">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Schedule Consultation
-                          </Button>
+                          <AppointmentBooking 
+                            doctor={doctor} 
+                            caseId={currentCaseId || undefined}
+                          />
                         </div>
                       ))
                     ) : (
