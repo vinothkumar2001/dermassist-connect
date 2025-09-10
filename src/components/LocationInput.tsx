@@ -20,13 +20,46 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Get Mapbox token from backend
+  useEffect(() => {
+    const getMapboxToken = async () => {
+      try {
+        const response = await fetch('https://mdfhnsxzddqoewuqciyz.supabase.co/functions/v1/get-mapbox-token', {
+          headers: {
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kZmhuc3h6ZGRxb2V3dXFjaXl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNzg1ODEsImV4cCI6MjA3MjY1NDU4MX0.Gf0DEeqVRe8n4aONLtDwrA1j8Wj_rweIVZNxqJ3wov0'}`,
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setMapboxToken(data.token);
+        }
+      } catch (error) {
+        console.error('Failed to get Mapbox token:', error);
+        // Fallback to a default token for development
+        setMapboxToken('pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x5Zm9pcTZ4MGNvdzJpcHU5aHZzeDUxNSJ9.QXn_kMcbNZ7YgD9KY2d8rw');
+      }
+    };
+    getMapboxToken();
+  }, []);
 
   const handleGeolocation = () => {
     if (!navigator.geolocation) {
       toast({
         title: "Geolocation Not Supported",
         description: "Your browser doesn't support geolocation",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!mapboxToken) {
+      toast({
+        title: "Configuration Error",
+        description: "Mapbox token not available",
         variant: "destructive"
       });
       return;
@@ -42,7 +75,7 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
         
         try {
           // Reverse geocode to get address
-          const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${location.longitude},${location.latitude}.json?access_token=${process.env.MAPBOX_PUBLIC_TOKEN || 'pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x5Zm9pcTZ4MGNvdzJpcHU5aHZzeDUxNSJ9.QXn_kMcbNZ7YgD9KY2d8rw'}&types=address,poi`);
+          const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${location.longitude},${location.latitude}.json?access_token=${mapboxToken}&types=address,poi`);
           
           if (response.ok) {
             const data = await response.json();
@@ -78,10 +111,19 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
   const handleAddressSubmit = async () => {
     if (!address.trim()) return;
     
+    if (!mapboxToken) {
+      toast({
+        title: "Configuration Error",
+        description: "Mapbox token not available",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       // Geocode address to coordinates
-      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${process.env.MAPBOX_PUBLIC_TOKEN || 'pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x5Zm9pcTZ4MGNvdzJpcHU5aHZzeDUxNSJ9.QXn_kMcbNZ7YgD9KY2d8rw'}&types=address,poi`);
+      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxToken}&types=address,poi`);
       
       if (response.ok) {
         const data = await response.json();

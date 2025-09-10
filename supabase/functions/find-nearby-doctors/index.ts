@@ -26,9 +26,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Calculate approximate bounding box for efficient querying
-    const latDelta = radius / 111; // Rough conversion: 1 degree ≈ 111 km
-    const lngDelta = radius / (111 * Math.cos(latitude * Math.PI / 180));
+    console.log(`Searching for doctors near ${latitude}, ${longitude} within ${radius}km`);
 
     // Query doctors with location data and user_type = 'doctor'
     const { data: doctors, error } = await supabase
@@ -56,6 +54,8 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Found ${doctors?.length || 0} doctors in database`);
+
     // Calculate distances and filter by radius
     const nearbyDoctors = doctors
       ?.map(doctor => {
@@ -81,9 +81,12 @@ serve(async (req) => {
         };
       })
       .filter(doctor => doctor && doctor.distance <= radius)
-      .sort((a, b) => a!.distance - b!.distance) || [];
+      .sort((a, b) => a!.distance - b!.distance)
+      .slice(0, 5) || []; // Limit to 5 doctors
 
-    // If no doctors found in database, return mock data for demo
+    console.log(`Found ${nearbyDoctors.length} doctors within ${radius}km`);
+
+    // If no doctors found in database, return limited mock data for demo
     if (nearbyDoctors.length === 0) {
       const mockDoctors = [
         {
@@ -134,7 +137,11 @@ serve(async (req) => {
             address: '789 Specialist Clinic, University Area'
           }
         }
-      ].filter(doctor => doctor.distance <= radius);
+      ]
+      .filter(doctor => doctor.distance <= radius)
+      .slice(0, 5); // Limit mock data to 5 as well
+
+      console.log(`Returning ${mockDoctors.length} mock doctors`);
 
       return new Response(
         JSON.stringify({ doctors: mockDoctors }),
