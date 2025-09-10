@@ -22,11 +22,11 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Searching for doctors near ${latitude}, ${longitude} within ${radius}km`);
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-
-    console.log(`Searching for doctors near ${latitude}, ${longitude} within ${radius}km`);
 
     // Query doctors with location data and user_type = 'doctor'
     const { data: doctors, error } = await supabase
@@ -82,12 +82,13 @@ serve(async (req) => {
       })
       .filter(doctor => doctor && doctor.distance <= radius)
       .sort((a, b) => a!.distance - b!.distance)
-      .slice(0, 5) || []; // Limit to 5 doctors
+      .slice(0, 5) || []; // Limit to 5 results
 
     console.log(`Found ${nearbyDoctors.length} doctors within ${radius}km`);
 
-    // If no doctors found in database, return limited mock data for demo
+    // If no doctors found in database, return mock data for demo (limited to 5)
     if (nearbyDoctors.length === 0) {
+      console.log('No real doctors found, returning mock data');
       const mockDoctors = [
         {
           user_id: 'mock-1',
@@ -136,12 +137,40 @@ serve(async (req) => {
             longitude: longitude + (Math.random() - 0.5) * 0.3,
             address: '789 Specialist Clinic, University Area'
           }
+        },
+        {
+          user_id: 'mock-4',
+          first_name: 'Dr. James',
+          last_name: 'Wilson',
+          specialties: ['Dermatology', 'Acne Treatment'],
+          years_experience: 6,
+          avatar_url: null,
+          bio: 'Young specialist focused on acne and teenage skin problems',
+          distance: Math.round((Math.random() * 25 + 10) * 10) / 10,
+          is_verified: true,
+          location: {
+            latitude: latitude + (Math.random() - 0.5) * 0.4,
+            longitude: longitude + (Math.random() - 0.5) * 0.4,
+            address: '321 Youth Clinic, Suburbs'
+          }
+        },
+        {
+          user_id: 'mock-5',
+          first_name: 'Dr. Lisa',
+          last_name: 'Brown',
+          specialties: ['Dermatology', 'Psoriasis Treatment'],
+          years_experience: 20,
+          avatar_url: null,
+          bio: 'Senior dermatologist with expertise in chronic skin conditions',
+          distance: Math.round((Math.random() * 30 + 15) * 10) / 10,
+          is_verified: true,
+          location: {
+            latitude: latitude + (Math.random() - 0.5) * 0.5,
+            longitude: longitude + (Math.random() - 0.5) * 0.5,
+            address: '654 Senior Care Center, Medical Row'
+          }
         }
-      ]
-      .filter(doctor => doctor.distance <= radius)
-      .slice(0, 5); // Limit mock data to 5 as well
-
-      console.log(`Returning ${mockDoctors.length} mock doctors`);
+      ].filter(doctor => doctor.distance <= radius).slice(0, 5);
 
       return new Response(
         JSON.stringify({ doctors: mockDoctors }),

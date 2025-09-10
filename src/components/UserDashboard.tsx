@@ -49,6 +49,7 @@ const UserDashboard = () => {
   // Search for doctors when location changes
   useEffect(() => {
     if (userLocation) {
+      console.log('Searching for doctors at location:', userLocation);
       findNearbyDoctors(userLocation, 50);
     }
   }, [userLocation, findNearbyDoctors]);

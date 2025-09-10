@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Location {
   latitude: number;
@@ -23,28 +24,24 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Get Mapbox token from backend
+  // Get Mapbox token on component mount
   useEffect(() => {
     const getMapboxToken = async () => {
       try {
-        const response = await fetch('https://mdfhnsxzddqoewuqciyz.supabase.co/functions/v1/get-mapbox-token', {
-          headers: {
-            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kZmhuc3h6ZGRxb2V3dXFjaXl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNzg1ODEsImV4cCI6MjA3MjY1NDU4MX0.Gf0DEeqVRe8n4aONLtDwrA1j8Wj_rweIVZNxqJ3wov0'}`,
-          },
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setMapboxToken(data.token);
-        }
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (error) throw error;
+        setMapboxToken(data.token);
       } catch (error) {
         console.error('Failed to get Mapbox token:', error);
-        // Fallback to a default token for development
-        setMapboxToken('pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x5Zm9pcTZ4MGNvdzJpcHU5aHZzeDUxNSJ9.QXn_kMcbNZ7YgD9KY2d8rw');
+        toast({
+          title: "Configuration Error",
+          description: "Failed to load mapping services",
+          variant: "destructive"
+        });
       }
     };
     getMapboxToken();
-  }, []);
+  }, [toast]);
 
   const handleGeolocation = () => {
     if (!navigator.geolocation) {
@@ -56,14 +53,6 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
       return;
     }
 
-    if (!mapboxToken) {
-      toast({
-        title: "Configuration Error",
-        description: "Mapbox token not available",
-        variant: "destructive"
-      });
-      return;
-    }
 
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
@@ -74,6 +63,18 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
         };
         
         try {
+          if (!mapboxToken) {
+            console.log('No Mapbox token available for reverse geocoding');
+            setCurrentLocation(location);
+            onLocationChange(location);
+            setLoading(false);
+            toast({
+              title: "Location Found",
+              description: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
+            });
+            return;
+          }
+
           // Reverse geocode to get address
           const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${location.longitude},${location.latitude}.json?access_token=${mapboxToken}&types=address,poi`);
           
@@ -113,8 +114,8 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
     
     if (!mapboxToken) {
       toast({
-        title: "Configuration Error",
-        description: "Mapbox token not available",
+        title: "Service Unavailable",
+        description: "Address lookup service is currently unavailable",
         variant: "destructive"
       });
       return;

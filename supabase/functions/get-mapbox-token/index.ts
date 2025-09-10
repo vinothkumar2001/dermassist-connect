@@ -15,7 +15,6 @@ serve(async (req) => {
     const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
     
     if (!mapboxToken) {
-      console.error('MAPBOX_PUBLIC_TOKEN not found in environment');
       return new Response(
         JSON.stringify({ error: 'Mapbox token not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -30,7 +29,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Function error:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to get Mapbox token' }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
