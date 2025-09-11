@@ -80,7 +80,7 @@ serve(async (req) => {
           location: doctor.location
         };
       })
-      .filter(doctor => doctor && doctor.distance <= radius)
+      .filter(doctor => doctor && doctor.distance <= Math.min(radius, 5)) // Ensure max 5km radius
       .sort((a, b) => a!.distance - b!.distance)
       .slice(0, 5) || []; // Limit to 5 results
 
@@ -98,7 +98,7 @@ serve(async (req) => {
           years_experience: 12,
           avatar_url: null,
           bio: 'Specialized in skin cancer detection and cosmetic procedures',
-          distance: Math.round((Math.random() * 10 + 2) * 10) / 10,
+          distance: Math.round((Math.random() * 4 + 1) * 10) / 10, // 1-5km
           is_verified: true,
           location: {
             latitude: latitude + (Math.random() - 0.5) * 0.1,
@@ -114,7 +114,7 @@ serve(async (req) => {
           years_experience: 8,
           avatar_url: null,
           bio: 'Expert in pediatric skin conditions and general dermatology',
-          distance: Math.round((Math.random() * 15 + 5) * 10) / 10,
+          distance: Math.round((Math.random() * 4 + 1) * 10) / 10, // 1-5km
           is_verified: true,
           location: {
             latitude: latitude + (Math.random() - 0.5) * 0.2,
@@ -130,7 +130,7 @@ serve(async (req) => {
           years_experience: 15,
           avatar_url: null,
           bio: 'Board-certified dermatologist specializing in skin cancer surgery',
-          distance: Math.round((Math.random() * 20 + 8) * 10) / 10,
+          distance: Math.round((Math.random() * 4 + 1) * 10) / 10, // 1-5km
           is_verified: true,
           location: {
             latitude: latitude + (Math.random() - 0.5) * 0.3,
@@ -146,7 +146,7 @@ serve(async (req) => {
           years_experience: 6,
           avatar_url: null,
           bio: 'Young specialist focused on acne and teenage skin problems',
-          distance: Math.round((Math.random() * 25 + 10) * 10) / 10,
+          distance: Math.round((Math.random() * 4 + 1) * 10) / 10, // 1-5km
           is_verified: true,
           location: {
             latitude: latitude + (Math.random() - 0.5) * 0.4,
@@ -162,7 +162,7 @@ serve(async (req) => {
           years_experience: 20,
           avatar_url: null,
           bio: 'Senior dermatologist with expertise in chronic skin conditions',
-          distance: Math.round((Math.random() * 30 + 15) * 10) / 10,
+          distance: Math.round((Math.random() * 4 + 1) * 10) / 10, // 1-5km
           is_verified: true,
           location: {
             latitude: latitude + (Math.random() - 0.5) * 0.5,
@@ -170,7 +170,7 @@ serve(async (req) => {
             address: '654 Senior Care Center, Medical Row'
           }
         }
-      ].filter(doctor => doctor.distance <= radius).slice(0, 5);
+      ].filter(doctor => doctor.distance <= Math.min(radius, 5)).slice(0, 5); // Ensure max 5km
 
       return new Response(
         JSON.stringify({ doctors: mockDoctors }),

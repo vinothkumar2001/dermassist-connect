@@ -50,7 +50,7 @@ const UserDashboard = () => {
   useEffect(() => {
     if (userLocation) {
       console.log('Searching for doctors at location:', userLocation);
-      findNearbyDoctors(userLocation, 50);
+      findNearbyDoctors(userLocation, 5); // Changed to 5km radius
     }
   }, [userLocation, findNearbyDoctors]);
 
@@ -137,20 +137,26 @@ const UserDashboard = () => {
                         For best results, ensure good lighting and the affected area is clearly visible
                       </p>
                     </div>
-                    <Input
-                      type="file"
-                      accept="image/*,image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="image-upload"
-                      capture="environment"
-                    />
-                    <Label htmlFor="image-upload" className="cursor-pointer">
-                      <Button type="button" className="bg-medical-gradient hover:glow-effect">
-                        <FileImage className="w-4 h-4 mr-2" />
-                        Choose Image
+                    <div className="flex">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="image-upload"
+                        capture="environment"
+                      />
+                      <Button 
+                        type="button" 
+                        asChild
+                        className="bg-medical-gradient hover:glow-effect"
+                      >
+                        <label htmlFor="image-upload" className="cursor-pointer flex items-center">
+                          <FileImage className="w-4 h-4 mr-2" />
+                          Choose Image
+                        </label>
                       </Button>
-                    </Label>
+                    </div>
                   </div>
                 </div>
               ) : (
