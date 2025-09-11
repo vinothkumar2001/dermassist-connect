@@ -209,8 +209,23 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
       )}
       
       {currentLocation && (
-        <div className="mt-2 text-xs text-muted-foreground bg-muted p-2 rounded">
-          📍 {currentLocation.address || `${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}`}
+        <div className="mt-2 space-y-2">
+          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+            📍 {currentLocation.address || `${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}`}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCurrentLocation(null);
+              setAddress('');
+              onLocationChange(null);
+            }}
+            className="w-full"
+          >
+            Change Location
+          </Button>
         </div>
       )}
     </div>

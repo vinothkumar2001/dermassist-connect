@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Doctor {
   user_id: string;
@@ -26,12 +27,27 @@ export function DoctorMap({ doctors, userLocation, className }: DoctorMapProps) 
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+
+  // Get Mapbox token
+  useEffect(() => {
+    const getMapboxToken = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (error) throw error;
+        setMapboxToken(data.token);
+      } catch (error) {
+        console.error('Failed to get Mapbox token for map:', error);
+      }
+    };
+    getMapboxToken();
+  }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || !userLocation) return;
+    if (!mapContainer.current || !userLocation || !mapboxToken) return;
 
     // Initialize map
-    mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x5Zm9pcTZ4MGNvdzJpcHU5aHZzeDUxNSJ9.QXn_kMcbNZ7YgD9KY2d8rw';
+    mapboxgl.accessToken = mapboxToken;
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -46,7 +62,7 @@ export function DoctorMap({ doctors, userLocation, className }: DoctorMapProps) 
     return () => {
       map.current?.remove();
     };
-  }, [userLocation]);
+  }, [userLocation, mapboxToken]);
 
   useEffect(() => {
     if (!map.current || !userLocation) return;

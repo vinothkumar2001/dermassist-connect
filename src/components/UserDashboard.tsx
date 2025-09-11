@@ -139,13 +139,14 @@ const UserDashboard = () => {
                     </div>
                     <Input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,image/jpeg,image/jpg,image/png,image/gif,image/webp"
                       onChange={handleImageUpload}
                       className="hidden"
                       id="image-upload"
+                      capture="environment"
                     />
-                    <Label htmlFor="image-upload">
-                      <Button className="bg-medical-gradient hover:glow-effect">
+                    <Label htmlFor="image-upload" className="cursor-pointer">
+                      <Button type="button" className="bg-medical-gradient hover:glow-effect">
                         <FileImage className="w-4 h-4 mr-2" />
                         Choose Image
                       </Button>
