@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useConsultations } from "@/hooks/useConsultations";
+import { useDoctorCases } from "@/hooks/useDoctorCases";
 import { 
-  User, 
   Calendar, 
   ClipboardCheck, 
   MessageSquare, 
@@ -14,75 +15,37 @@ import {
   Clock,
   Eye,
   FileText,
-  Star
+  Star,
+  Brain
 } from "lucide-react";
 
 const DoctorDashboard = () => {
   const [selectedCase, setSelectedCase] = useState<any>(null);
+  const [doctorNotes, setDoctorNotes] = useState("");
+  const { cases, loading: casesLoading, updateCaseReview } = useDoctorCases();
+  const { consultations, loading: consLoading } = useConsultations();
 
-  const pendingCases = [
-    {
-      id: "CS-001",
-      patient: "Anonymous User #12845",
-      condition: "Seborrheic Dermatitis",
-      aiConfidence: 94,
-      severity: "Mild to Moderate",
-      submittedAt: "2 hours ago",
-      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=200&h=200&fit=crop",
-      symptoms: "Itchy, flaky patches on scalp and face area. Started 2 weeks ago.",
-      priority: "medium"
-    },
-    {
-      id: "CS-002", 
-      patient: "Anonymous User #12846",
-      condition: "Psoriasis",
-      aiConfidence: 89,
-      severity: "Moderate",
-      submittedAt: "4 hours ago",
-      image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=200&h=200&fit=crop",
-      symptoms: "Red, scaly patches on elbows. Family history of psoriasis.",
-      priority: "high"
-    },
-    {
-      id: "CS-003",
-      patient: "Anonymous User #12847", 
-      condition: "Eczema",
-      aiConfidence: 92,
-      severity: "Mild",
-      submittedAt: "6 hours ago",
-      image: "https://images.unsplash.com/photo-1559757160-f3c2c0b17c2f?w=200&h=200&fit=crop",
-      symptoms: "Dry, itchy skin on hands. Gets worse in winter.",
-      priority: "low"
+  useEffect(() => {
+    if (selectedCase) {
+      setDoctorNotes(selectedCase.doctor_diagnosis?.notes || "");
     }
-  ];
+  }, [selectedCase]);
 
-  const consultations = [
-    {
-      id: "CON-001",
-      patient: "Sarah Johnson",
-      time: "2:00 PM - 2:30 PM",
-      condition: "Follow-up: Acne Treatment",
-      status: "upcoming"
-    },
-    {
-      id: "CON-002", 
-      patient: "Michael Chen",
-      time: "3:00 PM - 3:30 PM",
-      condition: "Initial: Suspicious Mole",
-      status: "upcoming"
-    },
-    {
-      id: "CON-003",
-      patient: "Emily Rodriguez",
-      time: "4:00 PM - 4:30 PM", 
-      condition: "Follow-up: Rosacea Management",
-      status: "upcoming"
+  const handleCaseReview = async (verdict: 'approve' | 'modify' | 'reject') => {
+    if (!selectedCase || !doctorNotes.trim()) {
+      return;
     }
-  ];
 
-  const handleCaseReview = (caseData: any, verdict: 'approve' | 'modify' | 'reject') => {
-    console.log('Case review:', caseData.id, verdict);
-    // In real app, this would send to backend
+    const diagnosis = {
+      verdict,
+      notes: doctorNotes,
+      reviewed_at: new Date().toISOString(),
+      ai_agreement: verdict === 'approve'
+    };
+
+    await updateCaseReview(selectedCase.id, diagnosis, verdict);
+    setSelectedCase(null);
+    setDoctorNotes("");
   };
 
   const getPriorityColor = (priority: string) => {
@@ -122,30 +85,47 @@ const DoctorDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {pendingCases.map((case_) => (
+                    {casesLoading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      </div>
+                    ) : cases.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <ClipboardCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>No cases assigned yet</p>
+                      </div>
+                    ) : (
+                      cases.map((case_) => (
                       <div
                         key={case_.id}
                         className={`p-4 border rounded-lg cursor-pointer medical-transition hover:medical-shadow ${
                           selectedCase?.id === case_.id ? 'border-primary bg-primary/5' : 'hover:bg-secondary/20'
                         }`}
-                        onClick={() => setSelectedCase(case_)}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-sm">{case_.id}</span>
-                          <Badge variant={getPriorityColor(case_.priority) as any} className="text-xs">
-                            {case_.priority}
-                          </Badge>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">{case_.condition}</p>
-                          <p className="text-xs clinical-text">{case_.patient}</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs clinical-text">AI: {case_.aiConfidence}%</span>
-                            <span className="text-xs clinical-text">{case_.submittedAt}</span>
+                          onClick={() => setSelectedCase(case_)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold text-sm">{case_.case_title}</span>
+                            <Badge variant={getPriorityColor(case_.priority) as any} className="text-xs">
+                              {case_.priority}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">{case_.ai_diagnosis?.condition || 'Pending AI Analysis'}</p>
+                            <p className="text-xs clinical-text">
+                              {case_.patient?.first_name} {case_.patient?.last_name}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs clinical-text">
+                                AI: {case_.ai_diagnosis?.confidence || 0}%
+                              </span>
+                              <span className="text-xs clinical-text">
+                                {new Date(case_.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -158,7 +138,7 @@ const DoctorDashboard = () => {
                       <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <FileText className="w-5 h-5 text-primary" />
-                          <span>Case Review: {selectedCase.id}</span>
+                          <span>Case Review: {selectedCase.case_title}</span>
                         </div>
                         <Badge variant={getPriorityColor(selectedCase.priority) as any}>
                           {selectedCase.priority} priority
@@ -170,39 +150,57 @@ const DoctorDashboard = () => {
                       <div className="grid md:grid-cols-2 gap-6">
                         <div>
                           <h4 className="font-semibold mb-3">Submitted Image</h4>
-                          <div className="rounded-lg overflow-hidden medical-shadow">
-                            <img
-                              src={selectedCase.image}
-                              alt="Patient submission"
-                              className="w-full h-64 object-cover"
-                            />
-                          </div>
+                          {selectedCase.image_urls && selectedCase.image_urls.length > 0 ? (
+                            <div className="rounded-lg overflow-hidden medical-shadow">
+                              <img
+                                src={selectedCase.image_urls[0]}
+                                alt="Patient submission"
+                                className="w-full h-64 object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="bg-muted rounded-lg h-64 flex items-center justify-center">
+                              <p className="text-muted-foreground">No image available</p>
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-4">
                           <div>
-                            <h4 className="font-semibold mb-3">AI Analysis Results</h4>
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span>Detected Condition:</span>
-                                <Badge variant="secondary">{selectedCase.condition}</Badge>
+                            <h4 className="font-semibold mb-3 flex items-center space-x-2">
+                              <Brain className="w-5 h-5 text-primary" />
+                              <span>AI Analysis Results</span>
+                            </h4>
+                            {selectedCase.ai_diagnosis ? (
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span>Detected Condition:</span>
+                                  <Badge variant="secondary">{selectedCase.ai_diagnosis.condition}</Badge>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Confidence Level:</span>
+                                  <Badge variant={selectedCase.ai_diagnosis.confidence > 90 ? "default" : "secondary"}>
+                                    {selectedCase.ai_diagnosis.confidence}%
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Severity Assessment:</span>
+                                  <Badge variant="outline">{selectedCase.ai_diagnosis.severity}</Badge>
+                                </div>
+                                {selectedCase.ai_diagnosis.description && (
+                                  <div className="pt-2">
+                                    <p className="text-sm clinical-text">{selectedCase.ai_diagnosis.description}</p>
+                                  </div>
+                                )}
                               </div>
-                              <div className="flex items-center justify-between">
-                                <span>Confidence Level:</span>
-                                <Badge variant={selectedCase.aiConfidence > 90 ? "default" : "secondary"}>
-                                  {selectedCase.aiConfidence}%
-                                </Badge>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span>Severity Assessment:</span>
-                                <Badge variant="outline">{selectedCase.severity}</Badge>
-                              </div>
-                            </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">No AI analysis available yet</p>
+                            )}
                           </div>
                           
                           <div>
                             <h4 className="font-semibold mb-2">Patient Symptoms</h4>
                             <p className="text-sm clinical-text bg-secondary/30 p-3 rounded-lg">
-                              {selectedCase.symptoms}
+                              {selectedCase.symptoms || 'No symptoms reported'}
                             </p>
                           </div>
                         </div>
@@ -212,6 +210,8 @@ const DoctorDashboard = () => {
                       <div className="pt-6 border-t space-y-4">
                         <h4 className="font-semibold">Your Professional Assessment</h4>
                         <Textarea
+                          value={doctorNotes}
+                          onChange={(e) => setDoctorNotes(e.target.value)}
                           placeholder="Provide your diagnosis, treatment recommendations, and any additional notes..."
                           className="min-h-[120px]"
                         />
@@ -221,7 +221,8 @@ const DoctorDashboard = () => {
                       <div className="pt-6 border-t">
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Button
-                            onClick={() => handleCaseReview(selectedCase, 'approve')}
+                            onClick={() => handleCaseReview('approve')}
+                            disabled={!doctorNotes.trim()}
                             className="bg-healing-gradient hover:glow-effect flex-1"
                           >
                             <CheckCircle className="w-4 h-4 mr-2" />
@@ -229,7 +230,8 @@ const DoctorDashboard = () => {
                           </Button>
                           <Button
                             variant="outline"
-                            onClick={() => handleCaseReview(selectedCase, 'modify')}
+                            onClick={() => handleCaseReview('modify')}
+                            disabled={!doctorNotes.trim()}
                             className="flex-1"
                           >
                             <FileText className="w-4 h-4 mr-2" />
@@ -237,7 +239,8 @@ const DoctorDashboard = () => {
                           </Button>
                           <Button
                             variant="destructive"
-                            onClick={() => handleCaseReview(selectedCase, 'reject')}
+                            onClick={() => handleCaseReview('reject')}
+                            disabled={!doctorNotes.trim()}
                             className="flex-1"
                           >
                             <AlertTriangle className="w-4 h-4 mr-2" />
@@ -279,33 +282,44 @@ const DoctorDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {consultations.map((consultation) => (
-                    <div key={consultation.id} className="p-4 border rounded-lg hover:bg-secondary/20 medical-transition">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold">{consultation.patient}</span>
-                        <Badge variant={consultation.status === 'upcoming' ? 'default' : 'secondary'}>
-                          {consultation.status}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm clinical-text">{consultation.condition}</p>
-                        <div className="flex items-center space-x-2 text-sm clinical-text">
-                          <Clock className="w-4 h-4" />
-                          <span>{consultation.time}</span>
+                  {consLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    </div>
+                  ) : consultations.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No consultations scheduled</p>
+                    </div>
+                  ) : (
+                    consultations.map((consultation) => (
+                      <div key={consultation.id} className="p-4 border rounded-lg hover:bg-secondary/20 medical-transition">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold">Consultation</span>
+                          <Badge variant={consultation.status === 'scheduled' ? 'default' : 'secondary'}>
+                            {consultation.status}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm clinical-text">Type: {consultation.consultation_type}</p>
+                          <div className="flex items-center space-x-2 text-sm clinical-text">
+                            <Clock className="w-4 h-4" />
+                            <span>{new Date(consultation.scheduled_at).toLocaleString()}</span>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2 mt-3">
+                          <Button size="sm" variant="outline" className="flex-1">
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Start Call
+                          </Button>
+                          <Button size="sm" className="flex-1">
+                            <FileText className="w-4 h-4 mr-2" />
+                            View Case
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex space-x-2 mt-3">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          Start Call
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          <FileText className="w-4 h-4 mr-2" />
-                          View History
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </CardContent>
               </Card>
 
@@ -316,16 +330,18 @@ const DoctorDashboard = () => {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-2xl font-bold text-primary">23</div>
-                      <div className="text-sm text-muted-foreground">Cases Reviewed Today</div>
+                      <div className="text-2xl font-bold text-primary">{cases.length}</div>
+                      <div className="text-sm text-muted-foreground">Total Cases Assigned</div>
                     </div>
                     <div className="text-center p-4 bg-accent/30 rounded-lg">
-                      <div className="text-2xl font-bold text-accent-foreground">96%</div>
-                      <div className="text-sm text-muted-foreground">AI Agreement Rate</div>
+                      <div className="text-2xl font-bold text-accent-foreground">
+                        {cases.filter(c => c.status === 'doctor_approved').length}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Cases Approved</div>
                     </div>
                     <div className="text-center p-4 bg-primary/10 rounded-lg">
-                      <div className="text-2xl font-bold text-primary">8</div>
-                      <div className="text-sm text-muted-foreground">Consultations Today</div>
+                      <div className="text-2xl font-bold text-primary">{consultations.length}</div>
+                      <div className="text-sm text-muted-foreground">Consultations</div>
                     </div>
                     <div className="text-center p-4 bg-secondary/30 rounded-lg">
                       <div className="flex items-center justify-center space-x-1">

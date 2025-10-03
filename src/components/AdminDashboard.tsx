@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAdminData } from "@/hooks/useAdminData";
 import { 
   Users, 
   UserCheck, 
@@ -19,49 +21,9 @@ import {
 } from "lucide-react";
 
 const AdminDashboard = () => {
-  const systemStats = {
-    totalUsers: 12847,
-    activeDoctors: 156,
-    casesProcessed: 8432,
-    systemUptime: "99.9%"
-  };
+  const { stats, users, loading, verifyDoctor, assignRole } = useAdminData();
 
-  const recentUsers = [
-    { id: 1, name: "Dr. Sarah Wilson", type: "Doctor", status: "pending", joinDate: "2024-01-15" },
-    { id: 2, name: "Patient #12848", type: "Patient", status: "active", joinDate: "2024-01-15" },
-    { id: 3, name: "Dr. Michael Chen", type: "Doctor", status: "active", joinDate: "2024-01-14" },
-    { id: 4, name: "Patient #12849", type: "Patient", status: "active", joinDate: "2024-01-14" },
-  ];
 
-  const systemAlerts = [
-    {
-      id: 1,
-      type: "warning",
-      message: "High server load detected in AI processing queue",
-      time: "5 minutes ago"
-    },
-    {
-      id: 2, 
-      type: "info",
-      message: "Monthly backup completed successfully",
-      time: "2 hours ago"
-    },
-    {
-      id: 3,
-      type: "success", 
-      message: "New doctor verification completed",
-      time: "4 hours ago"
-    }
-  ];
-
-  const getAlertIcon = (type: string) => {
-    switch (type) {
-      case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case 'success': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'error': return <XCircle className="w-4 h-4 text-red-500" />;
-      default: return <Activity className="w-4 h-4 text-blue-500" />;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-subtle-gradient">
@@ -78,7 +40,7 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold text-primary">{systemStats.totalUsers.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-primary">{loading ? '...' : stats.totalUsers}</p>
                 </div>
                 <div className="p-3 bg-primary/10 rounded-full">
                   <Users className="w-6 h-6 text-primary" />
@@ -96,7 +58,7 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Active Doctors</p>
-                  <p className="text-2xl font-bold text-primary">{systemStats.activeDoctors}</p>
+                  <p className="text-2xl font-bold text-primary">{loading ? '...' : stats.activeDoctors}</p>
                 </div>
                 <div className="p-3 bg-secondary/50 rounded-full">
                   <UserCheck className="w-6 h-6 text-secondary-foreground" />
@@ -114,7 +76,7 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Cases Processed</p>
-                  <p className="text-2xl font-bold text-primary">{systemStats.casesProcessed.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-primary">{loading ? '...' : stats.casesProcessed}</p>
                 </div>
                 <div className="p-3 bg-accent/50 rounded-full">
                   <Activity className="w-6 h-6 text-accent-foreground" />
@@ -132,7 +94,7 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">System Uptime</p>
-                  <p className="text-2xl font-bold text-primary">{systemStats.systemUptime}</p>
+                  <p className="text-2xl font-bold text-primary">99.9%</p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-full">
                   <Shield className="w-6 h-6 text-green-600" />
@@ -165,29 +127,58 @@ const AdminDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {recentUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary/20 medical-transition">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-sm">{user.name}</p>
-                        <p className="text-xs text-muted-foreground">{user.type} • Joined {user.joinDate}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
-                          {user.status}
-                        </Badge>
-                        {user.status === 'pending' && (
-                          <div className="flex space-x-1">
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0">
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0">
-                              <XCircle className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     </div>
-                  ))}
+                  ) : users.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No users found</p>
+                    </div>
+                  ) : (
+                    users.slice(0, 10).map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary/20 medical-transition">
+                        <div className="space-y-1">
+                          <p className="font-semibold text-sm">
+                            {user.first_name} {user.last_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {user.user_type} • {user.email}
+                          </p>
+                          <div className="flex gap-1 mt-1">
+                            {user.roles.map(role => (
+                              <Badge key={role} variant="outline" className="text-xs">
+                                {role}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {user.user_type === 'doctor' && !user.is_verified && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => verifyDoctor(user.user_id)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Verify
+                            </Button>
+                          )}
+                          <Select onValueChange={(role: any) => assignRole(user.user_id, role)}>
+                            <SelectTrigger className="w-32 h-8">
+                              <SelectValue placeholder="Add role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Admin</SelectItem>
+                              <SelectItem value="doctor">Doctor</SelectItem>
+                              <SelectItem value="patient">Patient</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </CardContent>
               </Card>
 
@@ -196,35 +187,56 @@ const AdminDashboard = () => {
                   <CardTitle>User Statistics</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>Patients</span>
-                        <span>92%</span>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span>Patients</span>
+                          <span>{users.filter(u => u.user_type === 'patient').length}</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full"
+                            style={{
+                              width: `${(users.filter(u => u.user_type === 'patient').length / users.length) * 100}%`
+                            }}
+                          ></div>
+                        </div>
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: '92%' }}></div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span>Doctors</span>
+                          <span>{users.filter(u => u.user_type === 'doctor').length}</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div
+                            className="bg-secondary-foreground h-2 rounded-full"
+                            style={{
+                              width: `${(users.filter(u => u.user_type === 'doctor').length / users.length) * 100}%`
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span>Admins</span>
+                          <span>{users.filter(u => u.roles.includes('admin')).length}</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div
+                            className="bg-accent-foreground h-2 rounded-full"
+                            style={{
+                              width: `${(users.filter(u => u.roles.includes('admin')).length / users.length) * 100}%`
+                            }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>Doctors</span>
-                        <span>7%</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div className="bg-secondary-foreground h-2 rounded-full" style={{ width: '7%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>Admins</span>
-                        <span>1%</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div className="bg-accent-foreground h-2 rounded-full" style={{ width: '1%' }}></div>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -236,20 +248,41 @@ const AdminDashboard = () => {
               <Card className="soft-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5 text-primary" />
-                    <span>System Alerts</span>
+                    <Activity className="w-5 h-5 text-primary" />
+                    <span>System Status</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {systemAlerts.map((alert) => (
-                    <div key={alert.id} className="flex items-start space-x-3 p-4 border rounded-lg">
-                      {getAlertIcon(alert.type)}
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium">{alert.message}</p>
-                        <p className="text-xs text-muted-foreground">{alert.time}</p>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <div>
+                        <p className="font-medium">Database Status</p>
+                        <p className="text-sm text-muted-foreground">All systems operational</p>
                       </div>
                     </div>
-                  ))}
+                    <Badge variant="default">Healthy</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <div>
+                        <p className="font-medium">AI Processing</p>
+                        <p className="text-sm text-muted-foreground">Working normally</p>
+                      </div>
+                    </div>
+                    <Badge variant="default">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <div>
+                        <p className="font-medium">Storage</p>
+                        <p className="text-sm text-muted-foreground">Sufficient space available</p>
+                      </div>
+                    </div>
+                    <Badge variant="default">Healthy</Badge>
+                  </div>
                 </CardContent>
               </Card>
 

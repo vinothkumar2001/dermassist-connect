@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -112,6 +112,10 @@ export function useConsultations() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUserConsultations();
+  }, [user]);
 
   return {
     consultations,
