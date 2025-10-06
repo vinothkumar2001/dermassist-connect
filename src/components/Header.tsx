@@ -3,6 +3,7 @@ import { Heart, Menu, Shield, Users, User, LogIn, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useRoles } from "@/hooks/useRoles";
 
 interface HeaderProps {
   currentView: 'home' | 'user' | 'doctor' | 'admin';
@@ -11,7 +12,8 @@ interface HeaderProps {
 
 const Header = ({ currentView, onViewChange }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, profile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const { isDoctor, isAdmin } = useRoles();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -58,7 +60,7 @@ const Header = ({ currentView, onViewChange }: HeaderProps) => {
                   Patient Portal
                 </Button>
                 
-                {profile?.user_type === 'doctor' && (
+                {isDoctor && (
                   <Button
                     variant={currentView === 'doctor' ? 'default' : 'ghost'}
                     onClick={() => onViewChange('doctor')}
@@ -69,7 +71,7 @@ const Header = ({ currentView, onViewChange }: HeaderProps) => {
                   </Button>
                 )}
                 
-                {profile?.user_type === 'admin' && (
+                {isAdmin && (
                   <Button
                     variant={currentView === 'admin' ? 'default' : 'ghost'}
                     onClick={() => onViewChange('admin')}
@@ -141,7 +143,7 @@ const Header = ({ currentView, onViewChange }: HeaderProps) => {
                     Patient Portal
                   </Button>
                   
-                  {profile?.user_type === 'doctor' && (
+                  {isDoctor && (
                     <Button
                       variant={currentView === 'doctor' ? 'default' : 'ghost'}
                       onClick={() => {
@@ -155,7 +157,7 @@ const Header = ({ currentView, onViewChange }: HeaderProps) => {
                     </Button>
                   )}
                   
-                  {profile?.user_type === 'admin' && (
+                  {isAdmin && (
                     <Button
                       variant={currentView === 'admin' ? 'default' : 'ghost'}
                       onClick={() => {

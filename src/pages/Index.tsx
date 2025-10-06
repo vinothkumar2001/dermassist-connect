@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRoles } from "@/hooks/useRoles";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import UserDashboard from "@/components/UserDashboard";
@@ -12,6 +13,7 @@ type ViewType = 'home' | 'user' | 'doctor' | 'admin';
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('home');
   const { user, loading } = useAuth();
+  const { isDoctor, isAdmin, loading: rolesLoading } = useRoles();
   const navigate = useNavigate();
 
   // Redirect to auth if trying to access protected views without authentication
@@ -22,7 +24,7 @@ const Index = () => {
   }, [user, loading, currentView, navigate]);
 
   const renderCurrentView = () => {
-    if (loading) {
+    if (loading || rolesLoading) {
       return (
         <div className="min-h-screen hero-gradient flex items-center justify-center">
           <div className="text-center">
@@ -42,9 +44,9 @@ const Index = () => {
       case 'user':
         return user ? <UserDashboard /> : <Hero onGetStarted={() => navigate('/auth')} />;
       case 'doctor':
-        return user ? <DoctorDashboard /> : <Hero onGetStarted={() => navigate('/auth')} />;
+        return user && isDoctor ? <DoctorDashboard /> : <Hero onGetStarted={() => navigate('/auth')} />;
       case 'admin':
-        return user ? <AdminDashboard /> : <Hero onGetStarted={() => navigate('/auth')} />;
+        return user && isAdmin ? <AdminDashboard /> : <Hero onGetStarted={() => navigate('/auth')} />;
       default:
         return <Hero onGetStarted={() => user ? setCurrentView('user') : navigate('/auth')} />;
     }
