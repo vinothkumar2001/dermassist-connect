@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConsultations } from "@/hooks/useConsultations";
 import { useDoctorCases } from "@/hooks/useDoctorCases";
+import { useDoctorStats } from "@/hooks/useDoctorStats";
 import { 
   Calendar, 
   ClipboardCheck, 
@@ -24,6 +25,7 @@ const DoctorDashboard = () => {
   const [doctorNotes, setDoctorNotes] = useState("");
   const { cases, loading: casesLoading, updateCaseReview } = useDoctorCases();
   const { consultations, loading: consLoading } = useConsultations();
+  const { stats, loading: statsLoading } = useDoctorStats();
 
   useEffect(() => {
     if (selectedCase) {
@@ -330,25 +332,31 @@ const DoctorDashboard = () => {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-2xl font-bold text-primary">{cases.length}</div>
+                      <div className="text-2xl font-bold text-primary">
+                        {statsLoading ? '...' : stats.totalCases}
+                      </div>
                       <div className="text-sm text-muted-foreground">Total Cases Assigned</div>
                     </div>
                     <div className="text-center p-4 bg-accent/30 rounded-lg">
                       <div className="text-2xl font-bold text-accent-foreground">
-                        {cases.filter(c => c.status === 'doctor_approved').length}
+                        {statsLoading ? '...' : stats.approvedCases}
                       </div>
                       <div className="text-sm text-muted-foreground">Cases Approved</div>
                     </div>
                     <div className="text-center p-4 bg-primary/10 rounded-lg">
-                      <div className="text-2xl font-bold text-primary">{consultations.length}</div>
-                      <div className="text-sm text-muted-foreground">Consultations</div>
+                      <div className="text-2xl font-bold text-primary">
+                        {statsLoading ? '...' : stats.totalConsultations}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Consultations</div>
                     </div>
                     <div className="text-center p-4 bg-secondary/30 rounded-lg">
                       <div className="flex items-center justify-center space-x-1">
                         <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                        <div className="text-2xl font-bold text-primary">4.9</div>
+                        <div className="text-2xl font-bold text-primary">
+                          {statsLoading ? '...' : stats.averageRating}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">Patient Rating</div>
+                      <div className="text-sm text-muted-foreground">Average Rating</div>
                     </div>
                   </div>
                 </CardContent>

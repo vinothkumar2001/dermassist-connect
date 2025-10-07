@@ -47,8 +47,10 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div className="mt-4 flex items-center text-sm">
-                <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-green-500">+12% from last month</span>
+                <TrendingUp className={`w-4 h-4 mr-1 ${stats.userGrowthPercent >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                <span className={stats.userGrowthPercent >= 0 ? 'text-green-500' : 'text-red-500'}>
+                  {stats.userGrowthPercent >= 0 ? '+' : ''}{stats.userGrowthPercent}% from last month
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -65,8 +67,8 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div className="mt-4 flex items-center text-sm">
-                <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-green-500">+3 new verifications</span>
+                <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                <span className="text-green-500">{stats.activeDoctors} verified</span>
               </div>
             </CardContent>
           </Card>
@@ -84,7 +86,7 @@ const AdminDashboard = () => {
               </div>
               <div className="mt-4 flex items-center text-sm">
                 <Clock className="w-4 h-4 text-blue-500 mr-1" />
-                <span className="text-blue-500">235 today</span>
+                <span className="text-blue-500">{loading ? '...' : stats.casesToday} today</span>
               </div>
             </CardContent>
           </Card>

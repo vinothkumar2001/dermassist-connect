@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,7 +29,7 @@ export function useNearbyDoctors() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const findNearbyDoctors = async (location: Location, radius = 50) => {
+  const findNearbyDoctors = useCallback(async (location: Location, radius = 50) => {
     if (!location) return;
     
     setLoading(true);
@@ -78,7 +78,7 @@ export function useNearbyDoctors() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   return {
     doctors,
