@@ -76,7 +76,7 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
           }
 
           // Reverse geocode to get address
-          const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${location.longitude},${location.latitude}.json?access_token=${mapboxToken}&types=address,poi`);
+          const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${location.longitude},${location.latitude}.json?access_token=${mapboxToken}&types=place,locality,neighborhood`);
           
           if (response.ok) {
             const data = await response.json();
@@ -115,7 +115,7 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
     if (!mapboxToken) {
       toast({
         title: "Service Unavailable",
-        description: "Address lookup service is currently unavailable",
+        description: "Please contact support to configure the Mapbox token",
         variant: "destructive"
       });
       return;
@@ -124,7 +124,7 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
     setLoading(true);
     try {
       // Geocode address to coordinates
-      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxToken}&types=address,poi`);
+      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxToken}&types=place,address,locality`);
       
       if (response.ok) {
         const data = await response.json();
@@ -137,24 +137,32 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
           };
           
           setCurrentLocation(location);
+          setAddress(feature.place_name); // Update address with full place name
           onLocationChange(location);
           
           toast({
-            title: "Address Found",
+            title: "Location Set",
             description: location.address,
           });
         } else {
           toast({
-            title: "Address Not Found",
-            description: "Please try a different address",
+            title: "Location Not Found",
+            description: "Please try a different address or city name",
             variant: "destructive"
           });
         }
+      } else {
+        toast({
+          title: "Search Failed",
+          description: "Please check your address and try again",
+          variant: "destructive"
+        });
       }
     } catch (error) {
+      console.error('Geocoding error:', error);
       toast({
-        title: "Geocoding Error",
-        description: "Failed to find address coordinates",
+        title: "Search Error",
+        description: "Failed to search for location",
         variant: "destructive"
       });
     }

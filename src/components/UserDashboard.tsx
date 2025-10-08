@@ -254,10 +254,10 @@ const UserDashboard = () => {
                     {cases.slice(0, 3).map((medicalCase) => (
                       <div
                         key={medicalCase.id}
-                        className="p-3 border rounded-lg hover:bg-secondary/20 medical-transition"
+                        className="p-4 border rounded-lg hover:bg-secondary/20 medical-transition cursor-pointer space-y-2"
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm">{medicalCase.case_title}</h4>
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-sm">{medicalCase.case_title}</h4>
                           <Badge 
                             variant={medicalCase.status === 'ai_analyzed' ? 'default' : 'secondary'}
                             className="text-xs"
@@ -266,12 +266,33 @@ const UserDashboard = () => {
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(medicalCase.created_at).toLocaleDateString()}
+                          {new Date(medicalCase.created_at).toLocaleDateString()} • {new Date(medicalCase.created_at).toLocaleTimeString()}
                         </p>
+                        
                         {medicalCase.ai_diagnosis && (
-                          <p className="text-xs text-primary mt-1">
-                            AI: {medicalCase.ai_diagnosis.condition}
-                          </p>
+                          <div className="pt-2 border-t space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-primary flex items-center gap-1">
+                                <Brain className="w-3 h-3" />
+                                AI Analysis
+                              </span>
+                              <Badge variant="outline" className="text-xs">
+                                {medicalCase.ai_diagnosis.confidence}% confidence
+                              </Badge>
+                            </div>
+                            <p className="text-xs font-semibold">{medicalCase.ai_diagnosis.condition}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {medicalCase.ai_diagnosis.description}
+                            </p>
+                            {medicalCase.ai_diagnosis.severity && (
+                              <Badge 
+                                variant={medicalCase.ai_diagnosis.severity === 'severe' ? 'destructive' : 'secondary'}
+                                className="text-xs"
+                              >
+                                Severity: {medicalCase.ai_diagnosis.severity}
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}

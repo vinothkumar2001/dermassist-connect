@@ -159,6 +159,8 @@ export function useMedicalCases() {
 
   const analyzeWithAI = async (caseId: string, imageUrl: string, symptoms?: string): Promise<{ analysis: any | null; error: any }> => {
     try {
+      console.log('Starting AI analysis for case:', caseId);
+      
       const { data, error } = await supabase.functions.invoke('analyze-skin', {
         body: { imageUrl, symptoms }
       });
@@ -167,33 +169,51 @@ export function useMedicalCases() {
         console.error('Error analyzing with AI:', error);
         toast({
           title: "Analysis Error",
-          description: "Failed to analyze image with AI",
+          description: error.message || "Failed to analyze image with AI. Please try again.",
           variant: "destructive"
         });
         return { analysis: null, error };
       }
 
-      if (data.success && data.analysis) {
+      console.log('AI analysis response:', data);
+
+      if (data && data.success && data.analysis) {
         // Update the case with AI diagnosis
-        await updateCase(caseId, {
+        const { case: updatedCase, error: updateError } = await updateCase(caseId, {
           ai_diagnosis: data.analysis,
           status: 'ai_analyzed'
         });
 
+        if (updateError) {
+          console.error('Error updating case with AI diagnosis:', updateError);
+          toast({
+            title: "Update Error",
+            description: "Analysis complete but failed to update case",
+            variant: "destructive"
+          });
+          return { analysis: data.analysis, error: updateError };
+        }
+
         toast({
           title: "Analysis Complete",
-          description: "AI analysis has been completed successfully",
+          description: `Detected: ${data.analysis.condition}`,
         });
 
         return { analysis: data.analysis, error: null };
       }
 
-      return { analysis: null, error: new Error('Analysis failed') };
+      toast({
+        title: "Analysis Failed",
+        description: data?.error || "Unable to analyze the image. Please ensure the image is clear and try again.",
+        variant: "destructive"
+      });
+      
+      return { analysis: null, error: new Error(data?.error || 'Analysis failed') };
     } catch (error) {
       console.error('Error analyzing with AI:', error);
       toast({
         title: "Analysis Error",
-        description: "Failed to analyze image with AI",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive"
       });
       return { analysis: null, error };
