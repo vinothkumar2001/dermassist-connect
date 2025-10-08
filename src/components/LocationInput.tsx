@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Location {
   latitude: number;
@@ -21,27 +20,7 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const { toast } = useToast();
-
-  // Get Mapbox token on component mount
-  useEffect(() => {
-    const getMapboxToken = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        if (error) throw error;
-        setMapboxToken(data.token);
-      } catch (error) {
-        console.error('Failed to get Mapbox token:', error);
-        toast({
-          title: "Configuration Error",
-          description: "Failed to load mapping services",
-          variant: "destructive"
-        });
-      }
-    };
-    getMapboxToken();
-  }, [toast]);
 
   const handleGeolocation = () => {
     if (!navigator.geolocation) {
@@ -63,25 +42,20 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
         };
         
         try {
-          if (!mapboxToken) {
-            console.log('No Mapbox token available for reverse geocoding');
-            setCurrentLocation(location);
-            onLocationChange(location);
-            setLoading(false);
-            toast({
-              title: "Location Found",
-              description: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
-            });
-            return;
-          }
-
-          // Reverse geocode to get address
-          const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${location.longitude},${location.latitude}.json?access_token=${mapboxToken}&types=place,locality,neighborhood`);
+          // Reverse geocode using Nominatim (OpenStreetMap)
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=10`,
+            {
+              headers: {
+                'User-Agent': 'DermaCare-App'
+              }
+            }
+          );
           
           if (response.ok) {
             const data = await response.json();
-            if (data.features && data.features.length > 0) {
-              location.address = data.features[0].place_name;
+            if (data.display_name) {
+              location.address = data.display_name;
               setAddress(location.address);
             }
           }
@@ -112,32 +86,30 @@ export function LocationInput({ onLocationChange, className }: LocationInputProp
   const handleAddressSubmit = async () => {
     if (!address.trim()) return;
     
-    if (!mapboxToken) {
-      toast({
-        title: "Service Unavailable",
-        description: "Please contact support to configure the Mapbox token",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     setLoading(true);
     try {
-      // Geocode address to coordinates
-      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxToken}&types=place,address,locality`);
+      // Geocode using Nominatim (OpenStreetMap)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'DermaCare-App'
+          }
+        }
+      );
       
       if (response.ok) {
         const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          const feature = data.features[0];
+        if (data && data.length > 0) {
+          const result = data[0];
           const location: Location = {
-            latitude: feature.center[1],
-            longitude: feature.center[0],
-            address: feature.place_name
+            latitude: parseFloat(result.lat),
+            longitude: parseFloat(result.lon),
+            address: result.display_name
           };
           
           setCurrentLocation(location);
-          setAddress(feature.place_name); // Update address with full place name
+          setAddress(result.display_name);
           onLocationChange(location);
           
           toast({
