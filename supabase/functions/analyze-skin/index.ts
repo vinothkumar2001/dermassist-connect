@@ -76,6 +76,33 @@ serve(async (req) => {
             ]
           }
         ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "analyze_skin_condition",
+              description: "Analyze a skin condition and return structured diagnosis data",
+              parameters: {
+                type: "object",
+                properties: {
+                  condition: { type: "string", description: "Most likely skin condition name" },
+                  confidence: { type: "integer", description: "Confidence level between 0-100" },
+                  severity: { type: "string", enum: ["mild", "moderate", "severe"] },
+                  description: { type: "string", description: "Detailed description of the condition" },
+                  symptoms: { type: "array", items: { type: "string" }, description: "Array of typical symptoms" },
+                  recommendations: { type: "array", items: { type: "string" }, description: "Array of care recommendations" },
+                  urgency: { type: "string", enum: ["low", "medium", "high", "urgent"] },
+                  requires_immediate_attention: { type: "boolean" },
+                  common_causes: { type: "array", items: { type: "string" } },
+                  when_to_see_doctor: { type: "string" }
+                },
+                required: ["condition", "confidence", "severity", "description", "symptoms", "recommendations", "urgency", "requires_immediate_attention", "common_causes", "when_to_see_doctor"],
+                additionalProperties: false
+              }
+            }
+          }
+        ],
+        tool_choice: { type: "function", function: { name: "analyze_skin_condition" } }
       }),
     });
 
@@ -104,34 +131,39 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const analysisText = data.choices[0].message.content;
-    
-    console.log('OpenAI response received');
+    console.log('Lovable AI response received');
 
-    // Try to parse JSON from the response
+    // Extract structured output from tool calling
     let analysis;
     try {
-      // Extract JSON from the response (in case there's extra text)
-      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        analysis = JSON.parse(jsonMatch[0]);
+      const toolCall = data.choices[0]?.message?.tool_calls?.[0];
+      if (toolCall && toolCall.function.name === 'analyze_skin_condition') {
+        analysis = JSON.parse(toolCall.function.arguments);
+        console.log('Successfully parsed structured analysis');
       } else {
-        throw new Error('No JSON found in response');
+        // Fallback to content if tool calling didn't work
+        const analysisText = data.choices[0]?.message?.content;
+        const jsonMatch = analysisText?.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          analysis = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No structured output found in response');
+        }
       }
     } catch (parseError) {
-      console.error('Failed to parse OpenAI response as JSON:', parseError);
-      // Fallback: create structured response from text
+      console.error('Failed to extract analysis from response:', parseError);
+      // Fallback: create default structured response
       analysis = {
         condition: "Analysis Available",
-        confidence: 85,
+        confidence: 75,
         severity: "moderate",
-        description: analysisText,
-        symptoms: [],
-        recommendations: ["Consult with a dermatologist for proper diagnosis"],
+        description: "Unable to perform detailed analysis. Please consult with a dermatologist for proper diagnosis.",
+        symptoms: ["Unable to analyze automatically"],
+        recommendations: ["Consult with a dermatologist for proper diagnosis", "Monitor the condition closely"],
         urgency: "medium",
         requires_immediate_attention: false,
-        common_causes: [],
-        when_to_see_doctor: "If symptoms persist or worsen"
+        common_causes: ["Requires professional evaluation"],
+        when_to_see_doctor: "As soon as possible for proper medical evaluation"
       };
     }
 
