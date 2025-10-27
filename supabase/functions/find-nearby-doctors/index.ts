@@ -13,22 +13,65 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    // Use ANON_KEY to respect RLS policies instead of SERVICE_ROLE_KEY
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    });
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Authenticated user searching for doctors:', user.id);
+
     const { latitude, longitude, radius = 50 } = await req.json();
     
-    if (!latitude || !longitude) {
+    // Input validation
+    if (typeof latitude !== 'number' || typeof longitude !== 'number') {
       return new Response(
-        JSON.stringify({ error: 'Latitude and longitude are required' }),
+        JSON.stringify({ error: 'Latitude and longitude must be numbers' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid latitude or longitude values' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (typeof radius !== 'number' || radius < 1 || radius > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Radius must be between 1 and 100 km' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     console.log(`Searching for doctors near ${latitude}, ${longitude} within ${radius}km`);
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Query doctors with location data and user_type = 'doctor'
+    // Now respects RLS policies because we're using ANON_KEY
     const { data: doctors, error } = await supabase
       .from('profiles')
       .select(`

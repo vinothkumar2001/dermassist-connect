@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { locationSchema } from '@/lib/validation';
 
 interface Doctor {
   user_id: string;
@@ -32,13 +33,51 @@ export function useNearbyDoctors() {
   const findNearbyDoctors = useCallback(async (location: Location, radius = 50) => {
     if (!location) return;
     
+    // Validate location
+    try {
+      locationSchema.parse(location);
+    } catch (error: any) {
+      const errorMessage = error.errors?.[0]?.message || 'Invalid location data';
+      toast({
+        title: "Validation error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate radius
+    if (radius < 1 || radius > 100) {
+      toast({
+        title: "Invalid radius",
+        description: "Radius must be between 1 and 100 km",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to search for doctors",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('find-nearby-doctors', {
         body: {
           latitude: location.latitude,
           longitude: location.longitude,
           radius
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,11 +13,56 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Authenticated user:', user.id);
+
     const { imageUrl, symptoms } = await req.json();
     
-    if (!imageUrl) {
+    // Input validation
+    if (!imageUrl || typeof imageUrl !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Image URL is required' }),
+        JSON.stringify({ error: 'Valid image URL is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate imageUrl is from Supabase storage
+    if (!imageUrl.includes(supabaseUrl)) {
+      return new Response(
+        JSON.stringify({ error: 'Image must be from authorized storage' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate symptoms if provided
+    if (symptoms && (typeof symptoms !== 'string' || symptoms.length > 5000)) {
+      return new Response(
+        JSON.stringify({ error: 'Symptoms must be a string under 5000 characters' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -49,9 +95,16 @@ serve(async (req) => {
       "when_to_see_doctor": "When to seek professional medical attention"
     }`;
 
-    const userPrompt = symptoms 
-      ? `Please analyze this skin condition image. The patient reports the following symptoms: ${symptoms}`
+    // Sanitize symptoms to prevent prompt injection
+    const sanitizedSymptoms = symptoms 
+      ? symptoms.replace(/[<>{}]/g, '').trim().substring(0, 5000)
+      : '';
+
+    const userPrompt = sanitizedSymptoms
+      ? `Please analyze this skin condition image. The patient reports the following symptoms: ${sanitizedSymptoms}`
       : `Please analyze this skin condition image and provide a comprehensive assessment.`;
+
+    console.log(`Analyzing image for user ${user.id}`);
 
     console.log('Sending request to Lovable AI for skin analysis...');
 

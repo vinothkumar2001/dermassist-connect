@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { medicalCaseSchema, type MedicalCaseInput } from '@/lib/validation';
 
 export interface MedicalCase {
   id: string;
@@ -87,6 +88,19 @@ export function useMedicalCases() {
       return { case: null, error: new Error('User not authenticated') };
     }
 
+    // Validate input
+    try {
+      medicalCaseSchema.parse(caseData);
+    } catch (error: any) {
+      const errorMessage = error.errors?.[0]?.message || 'Invalid input data';
+      toast({
+        title: "Validation error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { case: null, error: errorMessage };
+    }
+
     try {
       const { data, error } = await supabase
         .from('medical_cases')
@@ -159,10 +173,34 @@ export function useMedicalCases() {
 
   const analyzeWithAI = async (caseId: string, imageUrl: string, symptoms?: string): Promise<{ analysis: any | null; error: any }> => {
     try {
+      // Validate symptoms length
+      if (symptoms && symptoms.length > 5000) {
+        toast({
+          title: "Input too long",
+          description: "Symptoms description must be under 5000 characters",
+          variant: "destructive",
+        });
+        return { analysis: null, error: 'Symptoms too long' };
+      }
+
       console.log('Starting AI analysis for case:', caseId);
       
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to analyze images",
+          variant: "destructive",
+        });
+        return { analysis: null, error: 'Not authenticated' };
+      }
+
       const { data, error } = await supabase.functions.invoke('analyze-skin', {
-        body: { imageUrl, symptoms }
+        body: { imageUrl, symptoms },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
       if (error) {
