@@ -21,24 +21,32 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signIn(email, password);
-    if (!error) {
-      navigate('/');
+    try {
+      const { error } = await signIn(email, password);
+      if (!error) {
+        navigate('/');
+      }
+    } catch (err) {
+      console.error('Sign in error:', err);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signUp(email, password, firstName, lastName);
-    if (!error) {
-      // User will need to verify email, but we can show success message
+    try {
+      const { error } = await signUp(email, password, firstName, lastName);
+      if (!error) {
+        // User will need to verify email, but we can show success message
+      }
+    } catch (err) {
+      console.error('Sign up error:', err);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (

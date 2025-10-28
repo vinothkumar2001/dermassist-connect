@@ -54,17 +54,27 @@ export function useFileUpload() {
         return { url: null, error };
       }
 
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL (1 hour expiry for medical images)
+      const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('medical-images')
-        .getPublicUrl(data.path);
+        .createSignedUrl(data.path, 3600);
+
+      if (urlError) {
+        console.error('Failed to create signed URL:', urlError);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to generate secure URL for image",
+          variant: "destructive"
+        });
+        return { url: null, error: urlError };
+      }
 
       toast({
         title: "Upload Successful",
         description: "Image uploaded successfully",
       });
 
-      return { url: publicUrl, error: null };
+      return { url: signedUrlData.signedUrl, error: null };
     } catch (error) {
       console.error('Upload error:', error);
       toast({
@@ -124,17 +134,27 @@ export function useFileUpload() {
         return { url: null, error };
       }
 
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL (24 hour expiry for avatars)
+      const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('profile-avatars')
-        .getPublicUrl(data.path);
+        .createSignedUrl(data.path, 86400);
+
+      if (urlError) {
+        console.error('Failed to create signed URL:', urlError);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to generate secure URL for avatar",
+          variant: "destructive"
+        });
+        return { url: null, error: urlError };
+      }
 
       toast({
         title: "Avatar Updated",
         description: "Profile picture updated successfully",
       });
 
-      return { url: publicUrl, error: null };
+      return { url: signedUrlData.signedUrl, error: null };
     } catch (error) {
       console.error('Avatar upload error:', error);
       toast({
